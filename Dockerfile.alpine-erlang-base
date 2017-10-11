@@ -1,0 +1,21 @@
+FROM bitwalker/alpine-elixir:latest
+
+COPY . .
+RUN mix deps.get
+RUN mix release --env=alpine_erlang_base
+RUN find _build/ -iname clock.tar.gz -exec cp {} . \;
+
+
+FROM pentacent/erlang-base-alpine:latest
+
+EXPOSE 4000
+ENV PORT=4000
+ENV REPLACE_OS_VARS=true
+ENV SHELL=/bin/sh
+
+COPY --from=0 /opt/app/clock.tar.gz .
+RUN tar xf clock.tar.gz && rm clock.tar.gz
+
+USER default
+
+ENTRYPOINT ["/opt/app/bin/clock"]
